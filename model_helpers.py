@@ -80,10 +80,9 @@ def l1_matrix_norm(M):
 def reconstruction_loss(img, mask=None, center_size=None, center_weight=0.9):
     assert mask or center_size, 'You have to either specify the mask or the center_size'
     mask = mask if mask else create_center_mask(img, center_size[:2])
-    mask_inv = 1 - mask
 
     def loss(y_true, y_pred):
-        return (center_weight * l1_matrix_norm(mask * (y_true - (mask_inv * y_pred))) + (1 - center_weight) * l1_matrix_norm(mask_inv * (y_true - (mask_inv * y_pred)))) / np.prod(y_true.shape[:2])
+        return (center_weight * l1_matrix_norm(mask * (y_true - y_pred)) + (1 - center_weight) * l1_matrix_norm((1 - mask) * (y_true - y_pred))) / np.prod(y_true.shape[:2])
 
     return loss
 
