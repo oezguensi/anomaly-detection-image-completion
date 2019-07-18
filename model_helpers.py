@@ -135,7 +135,8 @@ def create_anomaly_cnn(input_shape=input_shape, conv_layer_datas=conv_layer_data
     inputs = Input(shape=(*input_shape[:2], 1))
     outputs = inputs
     for i, data in enumerate(conv_layer_datas):
-        outputs = conv_block(outputs, data['kernel_size'], data['dilation_rate'], data['strides'], data['filters'], model_width)
+        outputs = conv_block(outputs, data['kernel_size'], data['dilation_rate'], data['strides'], data['filters'],
+                             model_width if i != len(conv_layer_datas) - 1 else 1)
         outputs = UpSampling2D(size=2)(outputs) if i == 11 else outputs
     outputs = Lambda(lambda x: K.clip(x, -1, 1), name='clip')(outputs)
     outputs = Lambda(lambda x: tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]], 'REFLECT'))(outputs)
