@@ -70,7 +70,7 @@ def l1_matrix_norm(M):
 def reconstruction_loss(patch_size, mask=None, center_size=None, center_weight=0.9):
     assert mask is not None or center_size, 'You have to either specify the mask or the center_size'
     mask = mask if mask is not None else create_center_mask(patch_size, center_size[:2])
-    mask = mask.reshape(1, *mask.shape, 1).astype('float32')
+    mask = mask.reshape(1, *mask.shape).astype('float32')
     mask_inv = 1 - mask
 
     def loss(y_true, y_pred):
