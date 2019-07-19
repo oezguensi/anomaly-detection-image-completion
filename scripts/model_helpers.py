@@ -2,16 +2,13 @@ import tensorflow as tf
 import keras.backend as K
 import numpy as np
 
-import matplotlib.pyplot as plt
-import cv2
-
 from keras.models import Model
 from keras.layers import Input, Conv2D, Lambda, UpSampling2D, ELU
 
+from data_helpers import *
 
-"""
-Model parameters from the original paper: https://arxiv.org/pdf/1811.06861.pdf 
-"""
+
+# Model parameters from the original paper: https://arxiv.org/pdf/1811.06861.pdf
 input_shape = (128, 128, 1)
 
 original_conv_layer_datas = [
@@ -66,23 +63,13 @@ def create_anomaly_cnn(input_shape=input_shape, conv_layer_datas=None, model_wid
     return Model(inputs=inputs, outputs=outputs)
 
 
-def create_center_mask(img_shape, center_size):
-    mask = np.zeros(img_shape[:2])
-    h, w = img_shape[:2]
-    y_start = h // 2 - center_size[0] // 2
-    x_start = w // 2 - center_size[1] // 2
-    mask[y_start:y_start + center_size[0], x_start:x_start + center_size[1]] = 1
-
-    return mask
-
-
 def l1_matrix_norm(M):
     return K.cast(K.max(K.sum(K.abs(M), axis=0)), 'float32')
 
 
-def reconstruction_loss(img_shape, mask=None, center_size=None, center_weight=0.9):
+def reconstruction_loss(patch_size, mask=None, center_size=None, center_weight=0.9):
     assert mask is not None or center_size, 'You have to either specify the mask or the center_size'
-    mask = mask if mask is not None else create_center_mask(img_shape, center_size[:2])
+    mask = mask if mask is not None else create_center_mask(patch_size, center_size[:2])
     mask = mask.reshape(1, *mask.shape, 1).astype('float32')
     mask_inv = 1 - mask
 
@@ -94,12 +81,10 @@ def reconstruction_loss(img_shape, mask=None, center_size=None, center_weight=0.
         surr_part = mask_inv * diff
         surr_part_normed = l1_matrix_norm(surr_part)
 
-        num_pixels = np.prod(img_shape).astype('float32')
+        num_pixels = np.prod(patch_size).astype('float32')
 
         numerator = center_weight * center_part_normed + (1 - center_weight) * surr_part_normed
 
-        l = numerator / num_pixels
-
-        return l
+        return numerator / num_pixels
 
     return loss
